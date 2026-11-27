@@ -82,3 +82,16 @@ export function EmptyState({ children }: { children: ReactNode }) {
 export function Avatar({ color, shape }: { color: string; shape: string }) {
   return <span aria-hidden className={`inline-block h-6 w-6 shrink-0 ${shape}`} style={{ background: color }} />;
 }
+
+const AVATARS = [
+  { color: "#8fcbb5", shape: "rounded-md" },
+  { color: "#efb98a", shape: "rounded-full" },
+  { color: "#b9b0db", shape: "rounded-lg rotate-12" },
+  { color: "#9cc3e6", shape: "rounded-full" },
+  { color: "#e9a3a8", shape: "rounded-md rotate-45" },
+];
+export const avatarFor = (i: number) => AVATARS[((i % AVATARS.length) + AVATARS.length) % AVATARS.length];
+
+export function Notice({ children, tone = "sky" }: { children: ReactNode; tone?: "sky" | "amber" }) {
+  return <p className={`rounded-2xl p-4 text-sm ${tone === "sky" ? "bg-sky-soft text-sky" : "bg-amber-soft text-amber"}`}>{children}</p>;
+}

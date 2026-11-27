@@ -46,3 +46,9 @@
   .input { @apply w-full rounded-xl border border-border bg-card px-3 py-2 text-sm outline-none focus:border-primary; }
   .label { @apply mb-1 block text-sm font-bold; }
 }
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
