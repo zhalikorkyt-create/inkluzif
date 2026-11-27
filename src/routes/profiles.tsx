@@ -1,63 +1,65 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { PageHeader, DemoBadge, Avatar } from "@/components/app/AppShell";
-import { avatarFor } from "@/lib/types";
+import { PageHeader, Avatar, avatarFor } from "@/components/app/AppShell";
 import { useStore } from "@/lib/store";
+import type { Student } from "@/shared/types";
 
 export const Route = createFileRoute("/profiles")({
-  head: () => ({ meta: [{ title: "Оқушылар — Өз қадамым" }, { name: "description", content: "Оқушы кодтары, мақсаттар және қолдау түрлері." }] }),
+  head: () => ({ meta: [{ title: "Оқушылар — Өз қадамым" }] }),
   component: Profiles,
 });
 
-const SUPPORT_OPTIONS = ["визуалды кесте", "таймер", "сурет-карточка", "санау таяқшалары", "үлгі сөйлем", "үзіліс", "қысқа нұсқау"];
-
 function Profiles() {
-  const { s, updateProfile, addProfile, removeProfile } = useStore();
+  const { s } = useStore();
+  const [adding, setAdding] = useState(false);
   return (
     <>
-      <PageHeader title="Оқушылар" desc="Бүгін жұмыс істейтін оқушыларды таңдап, мақсаты мен қолдау түрлерін өңдеңіз. Нақты аты-жөн жазбаңыз — тек код.">
-        <div className="flex items-center gap-2"><DemoBadge text="Ойдан шығарылған кодтар" /><button className="btn btn-primary" onClick={addProfile}>+ Оқушы қосу</button></div>
+      <PageHeader title="Оқушылар" desc="Әр оқушының диагнозы мен ерекшелігін жазыңыз: жасанды интеллект ҚМЖ-ны соған қарай бейімдейді. PIN кодты ата-анаға беріңіз.">
+        <button className="btn btn-primary" onClick={() => setAdding(true)}>+ Оқушы қосу</button>
       </PageHeader>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {s.profiles.map((p) => <ProfileCard key={p.id} id={p.id} onRemove={() => removeProfile(p.id)} update={updateProfile} />)}
+      <div className="grid gap-4 lg:grid-cols-2">
+        {adding && <StudentForm onDone={() => setAdding(false)} />}
+        {s.students.map((p) => <StudentForm key={p.id} student={p} />)}
       </div>
     </>
   );
 }
 
-function ProfileCard({ id, update, onRemove }: { id: string; update: ReturnType<typeof useStore>["updateProfile"]; onRemove: () => void }) {
-  const { s } = useStore();
-  const p = s.profiles.find((x) => x.id === id)!;
-  const [custom, setCustom] = useState("");
-  const toggle = (sup: string) => update(p.id, { supports: p.supports.includes(sup) ? p.supports.filter((x) => x !== sup) : [...p.supports, sup] });
-  const options = Array.from(new Set([...SUPPORT_OPTIONS, ...p.supports]));
+function StudentForm({ student, onDone }: { student?: Student; onDone?: () => void }) {
+  const { call } = useStore();
+  const [f, setF] = useState({ name: student?.name ?? "", diagnosis: student?.diagnosis ?? "", notes: student?.notes ?? "", pin: student?.pin ?? "" });
+  const [busy, setBusy] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const dirty = !student || f.name !== student.name || f.diagnosis !== student.diagnosis || f.notes !== student.notes || f.pin !== student.pin;
+  const id = student?.id ?? "new";
+  const set = (k: keyof typeof f) => (e: { target: { value: string } }) => { setF({ ...f, [k]: e.target.value }); setSaved(false); };
   return (
-    <div className={`card flex flex-col gap-3 ${p.selected ? "border-primary" : ""}`}>
-      <div className="flex items-center justify-between gap-2">
-        <Avatar {...avatarFor(s.profiles.indexOf(p))} />
-        <input aria-label="Оқушы коды" className="input max-w-36 font-bold" value={p.code} onChange={(e) => update(p.id, { code: e.target.value })} />
-        <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold">
-          <input type="checkbox" className="h-4 w-4 accent-[var(--color-primary)]" checked={p.selected} onChange={(e) => update(p.id, { selected: e.target.checked })} />
-          Таңдалған
-        </label>
+    <form className="card grid gap-3" onSubmit={async (e) => {
+      e.preventDefault(); setBusy(true);
+      try { await call("student.save", { id: student?.id, ...f }); setSaved(true); onDone?.(); } finally { setBusy(false); }
+    }}>
+      <div className="flex items-center gap-3">
+        <Avatar {...avatarFor(student?.color ?? 0)} />
+        <input aria-label="Аты-жөні" required className="input font-bold" value={f.name} onChange={set("name")} placeholder="Аты-жөні" />
       </div>
       <div>
-        <label className="label" htmlFor={`goal-${p.id}`}>Мақсат</label>
-        <textarea id={`goal-${p.id}`} rows={2} className="input" value={p.goal} onChange={(e) => update(p.id, { goal: e.target.value })} />
+        <label className="label" htmlFor={`dg-${id}`}>Диагнозы / ерекшелігі</label>
+        <textarea id={`dg-${id}`} rows={2} className="input" value={f.diagnosis} onChange={set("diagnosis")} placeholder="Мысалы: ЗПР, назар аудару қиын, оқу баяу" />
       </div>
-      <fieldset>
-        <legend className="label">Қолдау түрлері</legend>
-        <div className="flex flex-wrap gap-2">
-          {options.map((sup) => (
-            <button key={sup} type="button" aria-pressed={p.supports.includes(sup)} onClick={() => toggle(sup)} className={`chip cursor-pointer ${p.supports.includes(sup) ? "chip-teal" : "chip-muted"}`}>{sup}</button>
-          ))}
+      <div>
+        <label className="label" htmlFor={`nt-${id}`}>Не көмектеседі / ескертпе</label>
+        <textarea id={`nt-${id}`} rows={2} className="input" value={f.notes} onChange={set("notes")} placeholder="Мысалы: суретпен жақсы түсінеді, қысқа нұсқау керек" />
+      </div>
+      <div className="flex flex-wrap items-end gap-3">
+        <div>
+          <label className="label" htmlFor={`pn-${id}`}>Ата-ана PIN коды</label>
+          <input id={`pn-${id}`} className="input w-28 font-mono" inputMode="numeric" value={f.pin} onChange={set("pin")} placeholder="авто" />
         </div>
-        <form className="mt-2 flex gap-2" onSubmit={(e) => { e.preventDefault(); const v = custom.trim(); if (v && !p.supports.includes(v)) update(p.id, { supports: [...p.supports, v] }); setCustom(""); }}>
-          <input className="input" placeholder="Басқа қолдау…" value={custom} onChange={(e) => setCustom(e.target.value)} />
-          <button className="btn">Қосу</button>
-        </form>
-      </fieldset>
-      <button className="btn btn-ghost self-end text-rose" onClick={() => { if (confirm(`${p.code} және оның барлық жазбаларын жою керек пе?`)) onRemove(); }}>Жою</button>
-    </div>
+        <button className="btn btn-primary" disabled={busy || !dirty}>{busy ? "Сақталуда…" : "Сақтау"}</button>
+        {saved && !dirty && <span className="chip chip-teal">Сақталды</span>}
+        {student && <button type="button" className="btn btn-ghost ml-auto text-rose" onClick={async () => { if (confirm(`${student.name} және оның барлық нәтижелерін жою керек пе?`)) await call("student.delete", { id: student.id }); }}>Жою</button>}
+        {!student && <button type="button" className="btn btn-ghost" onClick={onDone}>Болдырмау</button>}
+      </div>
+    </form>
   );
 }

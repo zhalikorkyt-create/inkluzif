@@ -1,13 +1,20 @@
-import { createRootRoute, HeadContent, Outlet, Link } from "@tanstack/react-router";
+import { createRootRoute, HeadContent, Outlet, Link, useRouterState } from "@tanstack/react-router";
 import { AppShell } from "@/components/app/AppShell";
+import { TeacherProvider } from "@/lib/store";
 
-export const Route = createRootRoute({
-  component: () => (
+function Root() {
+  const path = useRouterState({ select: (s) => s.location.pathname });
+  const publicPage = path.startsWith("/play") || path.startsWith("/parent");
+  return (
     <>
       <HeadContent />
-      <AppShell><Outlet /></AppShell>
+      {publicPage ? <Outlet /> : <AppShell><TeacherProvider><Outlet /></TeacherProvider></AppShell>}
     </>
-  ),
+  );
+}
+
+export const Route = createRootRoute({
+  component: Root,
   notFoundComponent: () => (
     <div className="card text-center">
       <p className="font-bold">Бет табылмады</p>

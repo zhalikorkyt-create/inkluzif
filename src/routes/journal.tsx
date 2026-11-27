@@ -1,104 +1,115 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { PageHeader, EmptyState } from "@/components/app/AppShell";
+import { PageHeader, Avatar, avatarFor, EmptyState } from "@/components/app/AppShell";
 import { useStore } from "@/lib/store";
-import { LEVEL_LABEL, type Level } from "@/lib/types";
-import { reportFromEntry } from "@/lib/templates";
+import { shrinkImage } from "@/lib/api";
+import { LEVEL_LABEL, levelOf, subjectName, type Level, type Student } from "@/shared/types";
 
 export const Route = createFileRoute("/journal")({
-  head: () => ({ meta: [{ title: "Ілгерілеу — Өз қадамым" }, { name: "description", content: "Сабақ нәтижесін жазу: өз бетімен / көмекпен / әзірге жоқ." }] }),
+  head: () => ({ meta: [{ title: "Ілгерілеу — Өз қадамым" }] }),
   component: Journal,
 });
 
 const LEVEL_CHIP: Record<Level, string> = { independent: "chip-teal", assisted: "chip-amber", notyet: "chip-rose" };
-const today = () => new Date().toISOString().slice(0, 10);
 
 function Journal() {
-  const { s, addEntry, removeEntry, addReport } = useStore();
-  const sel = s.profiles.filter((p) => p.selected);
-  const list = sel.length ? sel : s.profiles;
-  const [profileId, setProfileId] = useState(list[0]?.id ?? "");
-  const [date, setDate] = useState(today());
-  const [task, setTask] = useState("");
-  const [level, setLevel] = useState<Level>("independent");
-  const [note, setNote] = useState("");
-  const approved = s.drafts.filter((d) => d.approved && d.profileId === profileId);
-  const [draftId, setDraftId] = useState("");
-
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!profileId || !task.trim()) return;
-    addEntry({ profileId, date: new Date(date + "T12:00:00").toISOString(), task: task.trim(), level, note, draftId: draftId || undefined });
-    setTask(""); setNote(""); setLevel("independent");
-  };
-
+  const { s } = useStore();
   return (
     <>
-      <PageHeader title="Ілгерілеу" desc="Әр тапсырманың нәтижесін белгілеңіз. Жазбадан бір басумен ата-анаға есеп жасауға болады." />
-      <form onSubmit={submit} className="card grid gap-4 md:grid-cols-2" aria-label="Жаңа жазба">
-        <div>
-          <label className="label" htmlFor="jp">Оқушы</label>
-          <select id="jp" className="input" value={profileId} onChange={(e) => { setProfileId(e.target.value); setDraftId(""); }}>
-            {s.profiles.map((p) => <option key={p.id} value={p.id}>{p.code}{p.selected ? " (таңдалған)" : ""}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="label" htmlFor="jd">Күні</label>
-          <input id="jd" type="date" className="input" value={date} max={today()} onChange={(e) => setDate(e.target.value)} />
-        </div>
-        <div>
-          <label className="label" htmlFor="jt">Тапсырма</label>
-          <input id="jt" className="input" required value={task} onChange={(e) => setTask(e.target.value)} placeholder="Мысалы: 5 затты санау" />
-        </div>
-        <div>
-          <label className="label" htmlFor="jl">Бекітілген ҚМЖ (міндетті емес)</label>
-          <select id="jl" className="input" value={draftId} onChange={(e) => setDraftId(e.target.value)}>
-            <option value="">—</option>
-            {approved.map((d) => <option key={d.id} value={d.id}>{d.title}</option>)}
-          </select>
-        </div>
-        <fieldset className="md:col-span-2">
-          <legend className="label">Нәтиже</legend>
-          <div className="flex flex-wrap gap-2">
-            {(Object.keys(LEVEL_LABEL) as Level[]).map((l) => (
-              <label key={l} className={`btn cursor-pointer ${level === l ? "btn-primary" : ""}`}>
-                <input type="radio" name="level" className="sr-only" checked={level === l} onChange={() => setLevel(l)} />
-                {LEVEL_LABEL[l]}
-              </label>
-            ))}
-          </div>
-        </fieldset>
-        <div className="md:col-span-2">
-          <label className="label" htmlFor="jn">Ескертпе</label>
-          <textarea id="jn" rows={2} className="input" value={note} onChange={(e) => setNote(e.target.value)} />
-        </div>
-        <button className="btn btn-primary justify-self-start" disabled={!task.trim()}>Жазбаны қосу</button>
-      </form>
-
-      <h2 className="mb-3 mt-8 text-xl font-bold">Жазбалар</h2>
-      {s.entries.length === 0 ? <EmptyState>Әзірге жазба жоқ.</EmptyState> : (
-        <ul className="grid gap-3">
-          {[...s.entries].sort((a, b) => b.date.localeCompare(a.date)).map((e) => {
-            const p = s.profiles.find((x) => x.id === e.profileId);
-            const hasReport = s.reports.some((r) => r.entryId === e.id);
-            return (
-              <li key={e.id} className="card flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="font-bold">{p?.code} · {e.task}</p>
-                  <p className="text-sm text-muted-foreground">{new Date(e.date).toLocaleDateString("kk-KZ")}{e.note && ` · ${e.note}`}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className={`chip ${LEVEL_CHIP[e.level]}`}>{LEVEL_LABEL[e.level]}</span>
-                  {hasReport
-                    ? <Link to="/reports" className="btn">Есепті ашу</Link>
-                    : <button className="btn" onClick={() => addReport({ profileId: e.profileId, entryId: e.id, text: reportFromEntry(e, p) })}>Есеп жасау</button>}
-                  <button className="btn btn-ghost text-rose" onClick={() => removeEntry(e.id)} aria-label="Жазбаны жою">Жою</button>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+      <PageHeader title="Ілгерілеу" desc="Оқушы ойынды аяқтаған сайын нәтиже осында өзі түседі және шолу автоматты түрде жаңарады. Сурет пен жазба қосып, ата-анаға жариялай аласыз." />
+      {s.students.length === 0 ? <EmptyState>Алдымен оқушы қосыңыз.</EmptyState> : (
+        <div className="grid gap-6">{s.students.map((st) => <StudentProgress key={st.id} st={st} />)}</div>
       )}
     </>
+  );
+}
+
+function StudentProgress({ st }: { st: Student }) {
+  const { s, call } = useStore();
+  const results = s.results.filter((r) => r.student_id === st.id);
+  const posts = s.posts.filter((p) => p.student_id === st.id);
+  const summary = s.summaries.find((x) => x.student_id === st.id);
+  const [busy, setBusy] = useState(false);
+  return (
+    <section id={st.id} className="card grid gap-5 scroll-mt-24" aria-labelledby={`h-${st.id}`}>
+      <div className="flex flex-wrap items-center gap-3">
+        <Avatar {...avatarFor(st.color)} />
+        <h2 id={`h-${st.id}`} className="text-xl font-extrabold">{st.name}</h2>
+        <span className="chip chip-muted">{results.length} ойын</span>
+      </div>
+
+      <div className="rounded-2xl bg-teal-soft p-4">
+        <div className="mb-1 flex items-center justify-between gap-2">
+          <p className="text-sm font-bold text-teal">Автоматты шолу</p>
+          <button className="btn btn-ghost px-2 py-1 text-xs" disabled={busy} onClick={async () => { setBusy(true); try { await call("summary", { student_id: st.id }); } finally { setBusy(false); } }}>{busy ? "Жаңартылуда…" : "Жаңарту"}</button>
+        </div>
+        <p className="whitespace-pre-line text-[15px]">{summary?.text || "Әзірге нәтиже жоқ. Оқушы ойын ойнағаннан кейін шолу өзі пайда болады."}</p>
+        {summary && <p className="mt-1 text-xs text-muted-foreground">Жаңартылды: {new Date(summary.updated_at).toLocaleString("kk-KZ")}</p>}
+      </div>
+
+      {results.length > 0 && (
+        <div>
+          <h3 className="mb-2 font-bold">Орындаған тапсырмалары</h3>
+          <ul className="grid gap-2">
+            {results.slice(0, 8).map((r) => {
+              const a = s.activities.find((x) => x.id === r.activity_id);
+              const lv = levelOf(r);
+              return (
+                <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border px-3 py-2">
+                  <span><span className="font-semibold">{r.game_title}</span> <span className="text-sm text-muted-foreground">· {a ? subjectName(a.subject) : ""} · {new Date(r.created_at).toLocaleDateString("kk-KZ")}</span></span>
+                  <span className="flex items-center gap-2 text-sm">{r.correct}/{r.total} бірден <span className={`chip ${LEVEL_CHIP[lv]}`}>{LEVEL_LABEL[lv]}</span></span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
+      <PostForm studentId={st.id} />
+      {posts.length > 0 && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {posts.map((p) => (
+            <article key={p.id} className="overflow-hidden rounded-2xl border border-border">
+              {p.photo_url && <img src={p.photo_url} alt="" className="aspect-[4/3] w-full object-cover" />}
+              <div className="grid gap-2 p-3">
+                {p.text && <p className="text-sm">{p.text}</p>}
+                <div className="flex flex-wrap items-center gap-2">
+                  {p.published ? <span className="chip chip-teal">Ата-анаға жарияланды</span> : <span className="chip chip-muted">Жарияланбаған</span>}
+                  <button className="btn px-3 py-1 text-xs" onClick={() => call("post.publish", { id: p.id, published: !p.published })}>{p.published ? "Жасыру" : "Жариялау"}</button>
+                  <button className="btn btn-ghost px-2 py-1 text-xs text-rose" onClick={async () => { if (confirm("Жою керек пе?")) await call("post.delete", { id: p.id }); }}>Жою</button>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function PostForm({ studentId }: { studentId: string }) {
+  const { call } = useStore();
+  const [text, setText] = useState("");
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [publish, setPublish] = useState(true);
+  const [busy, setBusy] = useState(false);
+  return (
+    <form className="grid gap-2 rounded-2xl border border-dashed border-border p-3" onSubmit={async (e) => {
+      e.preventDefault(); if (!text.trim() && !photo) return;
+      setBusy(true);
+      try { await call("post.save", { student_id: studentId, text, photo, published: publish }); setText(""); setPhoto(null); } finally { setBusy(false); }
+    }}>
+      <p className="text-sm font-bold">Сурет немесе жазба қосу</p>
+      <textarea rows={2} className="input" aria-label="Жазба" value={text} onChange={(e) => setText(e.target.value)} placeholder="Мысалы: Бүгін үшбұрышты өзі тапты!" />
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="btn cursor-pointer">
+          📷 Сурет
+          <input type="file" accept="image/*" className="sr-only" onChange={async (e) => { const f = e.target.files?.[0]; if (f) setPhoto(await shrinkImage(f)); e.target.value = ""; }} />
+        </label>
+        {photo && <img src={photo} alt="Таңдалған сурет" className="h-10 w-10 rounded-lg object-cover" />}
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={publish} onChange={(e) => setPublish(e.target.checked)} /> Ата-анаға бірден жариялау</label>
+        <button className="btn btn-primary ml-auto" disabled={busy || (!text.trim() && !photo)}>{busy ? "Жүктелуде…" : "Қосу"}</button>
+      </div>
+    </form>
   );
 }

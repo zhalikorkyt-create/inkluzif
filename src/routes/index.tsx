@@ -1,9 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { PageHeader } from "@/components/app/AppShell";
-import { Avatar } from "@/components/app/AppShell";
+import { PageHeader, Avatar, avatarFor, Notice } from "@/components/app/AppShell";
 import { useStore } from "@/lib/store";
-import { weeklySummary } from "@/lib/templates";
-import { SUBJECTS, avatarFor } from "@/lib/types";
+import { SUBJECTS, weekly } from "@/shared/types";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [
@@ -36,9 +34,7 @@ function BookArt() {
 
 function Index() {
   const { s } = useStore();
-  const sel = s.profiles.filter((p) => p.selected);
-  const approved = s.drafts.filter((d) => d.approved).length;
-  const queued = s.reports.filter((r) => r.status === "queued").length;
+  const published = s.posts.filter((p) => p.published).length;
   return (
     <>
       <PageHeader title="Дефектолог кабинеті" />
@@ -63,19 +59,18 @@ function Index() {
 
       <h2 className="mb-4 mt-8 text-2xl font-extrabold">Оқушылар</h2>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {s.profiles.map((p, i) => {
-          const w = weeklySummary(s.entries, p.id, new Date());
+        {s.students.map((p) => {
+          const w = weekly(s.results, p.id);
+          const acts = s.activities.filter((a) => a.student_id === p.id).length;
           return (
-            <Link key={p.id} to="/profiles" className="card flex flex-col gap-3 transition hover:border-primary">
+            <Link key={p.id} to="/journal" hash={p.id} className="card flex flex-col gap-3 transition hover:border-primary">
               <div className="flex items-center gap-3">
-                <Avatar {...avatarFor(i)} />
-                <span className="font-bold">{p.code}</span>
-                {p.selected && <span className="chip chip-teal ml-auto">Таңдалған</span>}
+                <Avatar {...avatarFor(p.color)} />
+                <span className="font-bold">{p.name}</span>
               </div>
-              <p className="text-sm text-muted-foreground">{p.goal}</p>
               <div>
-                <div className="h-2 overflow-hidden rounded-full bg-muted" role="img" aria-label={`Өз бетімен: ${w.pct}%`}><div className="h-full rounded-full bg-primary" style={{ width: `${w.pct}%` }} /></div>
-                <p className="mt-1 text-xs text-muted-foreground">Аптада өз бетімен {w.pct}% · {w.total} жазба</p>
+                <div className="h-2 overflow-hidden rounded-full bg-muted" role="img" aria-label={`Аптадағы дұрыс жауап: ${w.pct}%`}><div className="h-full rounded-full bg-primary" style={{ width: `${w.pct}%` }} /></div>
+                <p className="mt-1 text-xs text-muted-foreground">Аптада {w.games} ойын · бірден дұрыс {w.pct}% · {acts} тапсырма жиыны</p>
               </div>
             </Link>
           );
@@ -83,7 +78,7 @@ function Index() {
       </div>
 
       <section className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-4" aria-label="Қысқаша көрсеткіштер">
-        {([["Таңдалған оқушы", sel.length, "/profiles"], ["Бекітілген ҚМЖ", approved, "/lesson"], ["Ілгерілеу жазбасы", s.entries.length, "/journal"], ["Кезектегі есеп", queued, "/reports"]] as const).map(([l, v, to]) => (
+        {([["Оқушы", s.students.length, "/profiles"], ["Бейімделген ойын", s.activities.length, "/lesson"], ["Орындалған ойын", s.results.length, "/journal"], ["Ата-анаға жарияланған", published, "/reports"]] as const).map(([l, v, to]) => (
           <Link key={l} to={to} className="card transition hover:border-primary">
             <p className="text-sm text-muted-foreground">{l}</p>
             <p className="font-display text-3xl font-extrabold text-primary">{v}</p>
@@ -91,7 +86,15 @@ function Index() {
         ))}
       </section>
 
-      <p className="mt-8 rounded-2xl bg-sky-soft p-4 text-sm text-sky">Барлық оқушылар — ойдан шығарылған кодтар. Болашақта: ElevenLabs арқылы мұғалімнің расталған дауысы және ата-анаға қауіпсіз автоматты жеткізу.</p>
+      <div className="mt-8"><Features /></div>
     </>
   );
+}
+
+function Features() {
+  const { s } = useStore();
+  const f = s.features;
+  const missing = [!f.db && "дерекқор (Supabase)", !f.ai && "жасанды интеллект (Claude)", !f.voice && "апайдың дауысы (ElevenLabs)"].filter(Boolean);
+  if (!missing.length) return <Notice>Барлық қызмет қосулы: жасанды интеллект, апайдың дауысы және дерекқор.</Notice>;
+  return <Notice tone="amber">Демо режим: {missing.join(", ")} әлі қосылмаған. Кілттерді Vercel баптауларына қосқанда толық жұмыс істейді.{!f.db && " Қазір деректер уақытша сақталады."}</Notice>;
 }
