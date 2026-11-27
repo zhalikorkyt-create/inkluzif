@@ -1,6 +1,6 @@
 const KEY = "oz-qadamym:teacher-key";
-/** Сервер: Supabase Edge Function. Жергілікті әзірлеуде .env.development ішіндегі /api. */
-export const API = (import.meta.env.VITE_API_BASE as string | undefined) ?? "https://buzjiqnrbjwwiiwhkmfk.supabase.co/functions/v1/api";
+/** Сервер: Vercel функциялары (api/). */
+export const API = (import.meta.env.VITE_API_BASE as string | undefined) ?? "/api";
 export const getKey = () => { try { return localStorage.getItem(KEY) ?? ""; } catch { return ""; } };
 export const teacherKey = (user: string, pass: string) => `${encodeURIComponent(user)}:${encodeURIComponent(pass)}`;
 export const setKey = (k: string) => { try { localStorage.setItem(KEY, k); } catch { /* ignore */ } };
