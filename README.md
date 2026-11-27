@@ -22,3 +22,7 @@ npm run build    # dist/ қалтасына жинау
 Басты бет (`/`) осы деректерден көрсеткіштерді және әр оқушының соңғы 7 күндегі «өз бетімен» пайызын (`weeklySummary`) есептейді.
 
 Стек: Vite, React 19, TanStack Router (файлдық маршруттар), Tailwind CSS v4.
+
+## Vercel
+
+Vercel-де жаңа жоба ретінде осы репоны импорттаңыз: Framework — Vite, Build — `npm run build`, Output — `dist`. `vercel.json` барлық беттерді `index.html`-ге бағыттайды, сондықтан `/lesson` сияқты сілтемелер тікелей ашылады.

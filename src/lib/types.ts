@@ -17,6 +17,7 @@ export interface Profile {
 export interface Draft {
   id: string;
   profileId: string;
+  subject: string;
   title: string;
   text: string;
   source: "upload" | "paste" | "template";
@@ -49,3 +50,17 @@ export interface State {
   entries: Entry[];
   reports: Report[];
 }
+
+export const SUBJECTS = [
+  { id: "math", name: "Математика", grade: "5-сынып", tone: "mint" },
+  { id: "kaz", name: "Қазақ тілі", grade: "5-сынып", tone: "peach" },
+] as const;
+
+export const AVATARS = [
+  { color: "#8fcbb5", shape: "rounded-md" },
+  { color: "#efb98a", shape: "rounded-full" },
+  { color: "#b9b0db", shape: "rounded-lg rotate-12" },
+  { color: "#9cc3e6", shape: "rounded-full" },
+  { color: "#e9a3a8", shape: "rounded-md rotate-45" },
+];
+export const avatarFor = (i: number) => AVATARS[i % AVATARS.length];

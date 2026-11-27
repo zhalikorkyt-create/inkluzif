@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { PageHeader, DemoBadge } from "@/components/app/AppShell";
+import { PageHeader, DemoBadge, Avatar } from "@/components/app/AppShell";
+import { avatarFor } from "@/lib/types";
 import { useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/profiles")({
@@ -33,7 +34,8 @@ function ProfileCard({ id, update, onRemove }: { id: string; update: ReturnType<
   return (
     <div className={`card flex flex-col gap-3 ${p.selected ? "border-primary" : ""}`}>
       <div className="flex items-center justify-between gap-2">
-        <input aria-label="Оқушы коды" className="input max-w-32 font-bold" value={p.code} onChange={(e) => update(p.id, { code: e.target.value })} />
+        <Avatar {...avatarFor(s.profiles.indexOf(p))} />
+        <input aria-label="Оқушы коды" className="input max-w-36 font-bold" value={p.code} onChange={(e) => update(p.id, { code: e.target.value })} />
         <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold">
           <input type="checkbox" className="h-4 w-4 accent-[var(--color-primary)]" checked={p.selected} onChange={(e) => update(p.id, { selected: e.target.checked })} />
           Таңдалған

@@ -6,7 +6,7 @@ import { LEVEL_LABEL, type Level } from "@/lib/types";
 import { reportFromEntry } from "@/lib/templates";
 
 export const Route = createFileRoute("/journal")({
-  head: () => ({ meta: [{ title: "Журнал — Өз қадамым" }, { name: "description", content: "Сабақ нәтижесін жазу: өз бетімен / көмекпен / әзірге жоқ." }] }),
+  head: () => ({ meta: [{ title: "Ілгерілеу — Өз қадамым" }, { name: "description", content: "Сабақ нәтижесін жазу: өз бетімен / көмекпен / әзірге жоқ." }] }),
   component: Journal,
 });
 
@@ -34,7 +34,7 @@ function Journal() {
 
   return (
     <>
-      <PageHeader title="Журнал" desc="Әр тапсырманың нәтижесін белгілеңіз. Жазбадан бір басумен ата-анаға есеп жасауға болады." />
+      <PageHeader title="Ілгерілеу" desc="Әр тапсырманың нәтижесін белгілеңіз. Жазбадан бір басумен ата-анаға есеп жасауға болады." />
       <form onSubmit={submit} className="card grid gap-4 md:grid-cols-2" aria-label="Жаңа жазба">
         <div>
           <label className="label" htmlFor="jp">Оқушы</label>
@@ -51,7 +51,7 @@ function Journal() {
           <input id="jt" className="input" required value={task} onChange={(e) => setTask(e.target.value)} placeholder="Мысалы: 5 затты санау" />
         </div>
         <div>
-          <label className="label" htmlFor="jl">Бекітілген жоспар (міндетті емес)</label>
+          <label className="label" htmlFor="jl">Бекітілген ҚМЖ (міндетті емес)</label>
           <select id="jl" className="input" value={draftId} onChange={(e) => setDraftId(e.target.value)}>
             <option value="">—</option>
             {approved.map((d) => <option key={d.id} value={d.id}>{d.title}</option>)}

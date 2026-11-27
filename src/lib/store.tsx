@@ -1,16 +1,16 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Draft, Entry, Profile, Report, State } from "./types";
 
-const KEY = "oz-qadamym:v1";
+const KEY = "oz-qadamym:v2";
 export const uid = () => Math.random().toString(36).slice(2, 10);
 
 const daysAgo = (n: number) => new Date(Date.now() - n * 86400000).toISOString();
 
 export const SEED: State = {
   profiles: [
-    { id: "p1", code: "О-01", goal: "3 қадамдық нұсқауды орындау", supports: ["визуалды кесте", "таймер"], selected: true },
-    { id: "p2", code: "О-02", goal: "10-ға дейін санау және салыстыру", supports: ["санау таяқшалары"], selected: true },
-    { id: "p3", code: "О-03", goal: "Сұраққа толық сөйлеммен жауап беру", supports: ["сурет-карточка", "үлгі сөйлем"], selected: false },
+    { id: "p1", code: "Оқушы 01", goal: "3 қадамдық нұсқауды орындау", supports: ["визуалды кесте", "таймер"], selected: true },
+    { id: "p2", code: "Оқушы 02", goal: "10-ға дейін санау және салыстыру", supports: ["санау таяқшалары"], selected: true },
+    { id: "p3", code: "Оқушы 03", goal: "Сұраққа толық сөйлеммен жауап беру", supports: ["сурет-карточка", "үлгі сөйлем"], selected: false },
   ],
   drafts: [],
   entries: [
@@ -61,7 +61,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       updateProfile: (id, patch) => set((x) => ({ ...x, profiles: x.profiles.map((p) => (p.id === id ? { ...p, ...patch } : p)) })),
       addProfile: () => set((x) => ({
         ...x,
-        profiles: [...x.profiles, { id: uid(), code: `О-${String(x.profiles.length + 1).padStart(2, "0")}`, goal: "Жаңа мақсат", supports: [], selected: false }],
+        profiles: [...x.profiles, { id: uid(), code: `Оқушы ${String(x.profiles.length + 1).padStart(2, "0")}`, goal: "Жаңа мақсат", supports: [], selected: false }],
       })),
       removeProfile: (id) => set((x) => ({
         profiles: x.profiles.filter((p) => p.id !== id),

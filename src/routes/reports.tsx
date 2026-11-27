@@ -11,10 +11,10 @@ function Reports() {
   const { s, updateReport, removeReport } = useStore();
   return (
     <>
-      <PageHeader title="Ата-анаға есеп" desc="Есептер журнал жазбасынан жасалады. Мәтінді тексеріп, өңдеп, бекітіңіз — бекітілген есеп жіберу кезегіне түседі." />
+      <PageHeader title="Ата-анаға есеп" desc="Есептер «Ілгерілеу» жазбасынан жасалады. Мәтінді тексеріп, өңдеп, бекітіңіз — бекітілген есеп жіберу кезегіне түседі." />
       <p className="mb-6 rounded-2xl bg-sky-soft p-4 text-sm text-sky">Демо режимінде есеп ешкімге жіберілмейді: «Кезекте» күйі тек болашақ қауіпсіз жеткізуді көрсетеді.</p>
       {s.reports.length === 0 ? (
-        <EmptyState>Әзірге есеп жоқ. <Link to="/journal" className="font-semibold text-primary underline">Журналдан</Link> жазбаны таңдап, «Есеп жасау» басыңыз.</EmptyState>
+        <EmptyState>Әзірге есеп жоқ. <Link to="/journal" className="font-semibold text-primary underline">«Ілгерілеу»</Link> бетінен жазбаны таңдап, «Есеп жасау» басыңыз.</EmptyState>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {s.reports.map((r) => {
