@@ -7,7 +7,10 @@ import { LEVEL_LABEL, levelOf, subjectName } from "../../src/shared/types.js";
 
 const MODEL = env("CLAUDE_MODEL") || "claude-opus-5-5";
 export const aiEnabled = () => Boolean(env("ANTHROPIC_API_KEY"));
-const client = () => new Anthropic({ apiKey: env("ANTHROPIC_API_KEY") });
+const client = () => {
+  const ws = env("ANTHROPIC_WORKSPACE_ID");
+  return new Anthropic({ apiKey: env("ANTHROPIC_API_KEY"), ...(ws ? { defaultHeaders: { "anthropic-workspace-id": ws } } : {}) });
+};
 
 const ItemSchema = z.object({
   say: z.string().describe("Апайдың дауысымен оқылатын 1 қысқа сөйлем, қазақша"),
