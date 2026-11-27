@@ -72,7 +72,7 @@ export interface TeacherState {
   results: Result[];
   posts: Post[];
   summaries: Summary[];
-  features: { ai: boolean; voice: boolean; db: boolean };
+  features: { ai: boolean; voice: boolean; db: boolean; workspace?: string };
 }
 
 export type Level = "independent" | "assisted" | "notyet";
