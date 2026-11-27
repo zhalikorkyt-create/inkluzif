@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Manrope", system-ui, sans-serif;
+  --font-display: "Manrope", system-ui, sans-serif;
+
+  --color-background: #f7f3ec;
+  --color-foreground: #17302d;
+  --color-sidebar: #fcfaf5;
+  --color-card: #fffdf8;
+  --color-border: #e6e0d4;
+  --color-muted: #efeae0;
+  --color-muted-foreground: #5f6b68;
+  --color-primary: #0d5a52;
+  --color-primary-foreground: #ffffff;
+  --color-teal: #0f6b60;
+  --color-teal-soft: #dcefe9;
+  --color-peach-soft: #f9e6d8;
+  --color-tan: #d5b998;
+  --color-cream: #fff6e6;
+  --color-sky: #1e5f8c;
+  --color-sky-soft: #e3f0fa;
+  --color-amber: #8a5a00;
+  --color-amber-soft: #fdf1d8;
+  --color-rose: #a3324a;
+  --color-rose-soft: #fbe5ea;
+}
+
+@layer base {
+  body { @apply bg-background text-foreground font-sans antialiased; }
+  h1, h2, h3 { @apply font-display tracking-tight; }
+  :focus-visible { @apply outline-2 outline-offset-2 outline-primary; }
+}
+
+@layer components {
+  .card { @apply rounded-2xl border border-border bg-card p-5; }
+  .chip { @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold; }
+  .chip-teal { @apply bg-teal-soft text-teal; }
+  .chip-sky { @apply bg-sky-soft text-sky; }
+  .chip-amber { @apply bg-amber-soft text-amber; }
+  .chip-rose { @apply bg-rose-soft text-rose; }
+  .chip-muted { @apply bg-muted text-muted-foreground; }
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-sm font-bold transition hover:border-primary disabled:opacity-50 disabled:pointer-events-none; }
+  .btn-primary { @apply border-primary bg-primary text-primary-foreground hover:opacity-90; }
+  .btn-ghost { @apply border-transparent bg-transparent text-muted-foreground hover:text-foreground; }
+  .input { @apply w-full rounded-xl border border-border bg-card px-3 py-2 text-sm outline-none focus:border-primary; }
+  .label { @apply mb-1 block text-sm font-bold; }
+}
