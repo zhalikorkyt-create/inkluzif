@@ -1,3 +1,5 @@
+import { Buffer } from "node:buffer";
+import { env } from "./env.js";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 /** Кестелермен жұмыс: Supabase бар болса соны, жоқ болса жадтағы демо қойманы қолданады. */
@@ -11,6 +13,7 @@ export interface Db {
   remove(table: string, id: string): Promise<void>;
   putFile(path: string, bytes: Uint8Array, contentType: string): Promise<void>;
   fileUrl(path: string): Promise<string | null>;
+  checkAdmin(user: string, pass: string): Promise<boolean>;
 }
 
 const BUCKET = "media";
@@ -48,6 +51,10 @@ function supabaseDb(sb: SupabaseClient): Db {
     async fileUrl(path) {
       const r = await sb.storage.from(BUCKET).createSignedUrl(path, 60 * 60 * 24);
       return r.data?.signedUrl ?? null;
+    },
+    async checkAdmin(user, pass) {
+      const r = await sb.rpc("check_admin", { p_user: user, p_pass: pass });
+      return r.data === true;
     },
   };
 }
@@ -94,14 +101,17 @@ function memoryDb(): Db {
     async fileUrl(path) {
       return files[path] ?? null;
     },
+    async checkAdmin(user, pass) {
+      return user === "admin" && pass === (env("TEACHER_PASSWORD") ?? "demo");
+    },
   };
 }
 
 let cached: Db | null = null;
 export function db(): Db {
   if (cached) return cached;
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const url = env("SUPABASE_URL");
+  const key = env("SUPABASE_SERVICE_ROLE_KEY");
   if (url && key) {
     cached = supabaseDb(createClient(url, key, { auth: { persistSession: false } }));
   } else {

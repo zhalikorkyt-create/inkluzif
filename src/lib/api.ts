@@ -1,5 +1,8 @@
 const KEY = "oz-qadamym:teacher-key";
+/** Сервер: Supabase Edge Function. Жергілікті әзірлеуде .env.development ішіндегі /api. */
+export const API = (import.meta.env.VITE_API_BASE as string | undefined) ?? "https://buzjiqnrbjwwiiwhkmfk.supabase.co/functions/v1/api";
 export const getKey = () => { try { return localStorage.getItem(KEY) ?? ""; } catch { return ""; } };
+export const teacherKey = (user: string, pass: string) => `${encodeURIComponent(user)}:${encodeURIComponent(pass)}`;
 export const setKey = (k: string) => { try { localStorage.setItem(KEY, k); } catch { /* ignore */ } };
 
 export class ApiError extends Error { constructor(msg: string, public status: number) { super(msg); } }
@@ -11,18 +14,18 @@ async function handle<T>(r: Response): Promise<T> {
 }
 
 export async function teacher<T = unknown>(action: string, payload: Record<string, unknown> = {}, key = getKey()): Promise<T> {
-  return handle<T>(await fetch("/api/teacher", { method: "POST", headers: { "content-type": "application/json", "x-teacher-key": key }, body: JSON.stringify({ action, ...payload }) }));
+  return handle<T>(await fetch(`${API}/teacher`, { method: "POST", headers: { "content-type": "application/json", "x-teacher-key": key }, body: JSON.stringify({ action, ...payload }) }));
 }
 
 export async function parent<T = unknown>(action: string, payload: Record<string, unknown> = {}): Promise<T> {
-  return handle<T>(await fetch("/api/parent", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action, ...payload }) }));
+  return handle<T>(await fetch(`${API}/parent`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action, ...payload }) }));
 }
 
 export async function getPlay<T>(id: string): Promise<T> {
-  return handle<T>(await fetch(`/api/play?id=${encodeURIComponent(id)}`));
+  return handle<T>(await fetch(`${API}/play?id=${encodeURIComponent(id)}`));
 }
 export async function sendPlay(id: string, results: unknown[]) {
-  return handle(await fetch("/api/play", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id, results }) }));
+  return handle(await fetch(`${API}/play`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id, results }) }));
 }
 
 /** Суретті кішірейтіп, JPEG data URL-ге айналдырады. */

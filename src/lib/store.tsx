@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import type { TeacherState } from "@/shared/types";
-import { ApiError, getKey, setKey, teacher } from "./api";
+import { ApiError, setKey, teacher, teacherKey } from "./api";
 
 interface Api {
   s: TeacherState;
@@ -33,18 +33,21 @@ export function TeacherProvider({ children }: { children: ReactNode }) {
 }
 
 function Login({ onDone }: { onDone: () => void }) {
-  const [v, setV] = useState(getKey());
+  const [u, setU] = useState("admin");
+  const [p, setP] = useState("");
   const [err, setErr] = useState("");
+  const [busy, setBusy] = useState(false);
   return (
     <form className="card mx-auto mt-10 grid max-w-sm gap-3" onSubmit={async (e) => {
-      e.preventDefault();
-      try { await teacher("ping", {}, v); setKey(v); onDone(); } catch { setErr("Құпиясөз қате"); }
+      e.preventDefault(); setBusy(true); setErr("");
+      const k = teacherKey(u.trim(), p);
+      try { await teacher("ping", {}, k); setKey(k); onDone(); } catch { setErr("Логин немесе құпиясөз қате"); } finally { setBusy(false); }
     }}>
       <h1 className="text-2xl font-extrabold">Мұғалімге кіру</h1>
-      <label className="label" htmlFor="pw">Құпиясөз</label>
-      <input id="pw" type="password" className="input" value={v} onChange={(e) => setV(e.target.value)} autoFocus />
+      <div><label className="label" htmlFor="lg">Логин</label><input id="lg" className="input" autoComplete="username" value={u} onChange={(e) => setU(e.target.value)} /></div>
+      <div><label className="label" htmlFor="pw">Құпиясөз</label><input id="pw" type="password" className="input" autoComplete="current-password" value={p} onChange={(e) => setP(e.target.value)} autoFocus /></div>
       {err && <p className="chip chip-rose" role="alert">{err}</p>}
-      <button className="btn btn-primary">Кіру</button>
+      <button className="btn btn-primary" disabled={busy}>{busy ? "Тексерілуде…" : "Кіру"}</button>
     </form>
   );
 }

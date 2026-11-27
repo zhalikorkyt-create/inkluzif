@@ -1,15 +1,17 @@
+import { Buffer } from "node:buffer";
+import { env } from "./env.js";
 import { createHash } from "node:crypto";
 import type { Db } from "./db.js";
 import type { Game } from "../../src/shared/types.js";
 
-export const voiceEnabled = () => Boolean(process.env.ELEVENLABS_API_KEY && process.env.ELEVENLABS_VOICE_ID);
+export const voiceEnabled = () => Boolean(env("ELEVENLABS_API_KEY") && env("ELEVENLABS_VOICE_ID"));
 
 async function tts(text: string): Promise<Uint8Array> {
-  const voice = process.env.ELEVENLABS_VOICE_ID!;
-  const model = process.env.ELEVENLABS_MODEL || "eleven_v3";
+  const voice = env("ELEVENLABS_VOICE_ID") ?? "";
+  const model = env("ELEVENLABS_MODEL") || "eleven_v3";
   const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice}?output_format=mp3_44100_64`, {
     method: "POST",
-    headers: { "xi-api-key": process.env.ELEVENLABS_API_KEY!, "content-type": "application/json", accept: "audio/mpeg" },
+    headers: { "xi-api-key": env("ELEVENLABS_API_KEY") ?? "", "content-type": "application/json", accept: "audio/mpeg" },
     body: JSON.stringify({ text, model_id: model, language_code: "kk" }),
   });
   if (!r.ok) throw new Error(`ElevenLabs қатесі: ${r.status} ${(await r.text()).slice(0, 200)}`);
@@ -18,7 +20,7 @@ async function tts(text: string): Promise<Uint8Array> {
 
 /** Мәтінге дыбыс файлын жасайды (бірдей мәтін бір рет қана). */
 async function audioFor(d: Db, text: string): Promise<string> {
-  const path = `audio/${createHash("sha1").update(`${process.env.ELEVENLABS_VOICE_ID}:${text}`).digest("hex")}.mp3`;
+  const path = `audio/${createHash("sha1").update(`${env("ELEVENLABS_VOICE_ID")}:${text}`).digest("hex")}.mp3`;
   if (!(await d.fileUrl(path).catch(() => null))) {
     await d.putFile(path, await tts(text), "audio/mpeg");
   }

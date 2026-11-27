@@ -1,5 +1,5 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": { "types": ["node"] },
-  "include": ["api", "src/shared"]
+  "include": ["server", "src/shared"]
 }

@@ -1,10 +1,8 @@
-import { db } from "./_lib/db.js";
-import { body, fail, json, parentToken, studentFromToken } from "./_lib/http.js";
-import { parentAnswer, statsText } from "./_lib/ai.js";
+import { db } from "./lib/db.js";
+import { body, fail, json, parentToken, studentFromToken } from "./lib/http.js";
+import { parentAnswer, statsText } from "./lib/ai.js";
 import type { Activity, Post, Result, Student, Summary } from "../src/shared/types.js";
 import { LEVEL_LABEL, levelOf } from "../src/shared/types.js";
-
-export const config = { maxDuration: 60 };
 
 // Ата-ана порталы: баланы таңдау + PIN, жарияланған жазбалар, нәтижелер және бот.
 export async function POST(req: Request) {

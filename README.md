@@ -24,13 +24,10 @@ npm run build    # dist/ қалтасына жинау
 
 ## Құрылымы
 
-- `src/` — React (Vite, TanStack Router, Tailwind v4)
-- `api/` — Vercel серверлік функциялары: `teacher.ts`, `play.ts`, `parent.ts`
-- Дерекқор және суреттер/дыбыстар: Supabase (`media` жабық бакеті)
-- Кілттер: `.env.example` қараңыз. Кілттер қосылмаса, сайт демо режимде жұмыс істейді (деректер уақытша).
+- `src/` — React (Vite, TanStack Router, Tailwind v4), Vercel-де статикалық сайт ретінде.
+- `server/` — сервер логикасы (`teacher`, `play`, `parent`). `npm run build:edge` оны `supabase/functions/api/index.js` бір файлына жинайды; Supabase Edge Function `api` осы файлды жүктейді.
+- Дерекқор және суреттер/дыбыстар: Supabase (`media` жабық бакеті). Мұғалім логині дерекқорда bcrypt хэшпен сақталады.
+- Құпия кілттер (Claude, ElevenLabs) — Supabase → Edge Functions → Secrets. `.env.example` қараңыз.
+- Жергілікті тексеру: `npm run dev` (кілтсіз демо режим, логин `admin` / `demo`).
 
 Балалардың аты мен диагнозы кодта сақталмайды, тек дерекқорда.
-
-## Vercel
-
-Репоны импорттаңыз (Framework — Vite). Settings → Environment Variables ішіне `.env.example`-дегі айнымалыларды қосып, Redeploy басыңыз.

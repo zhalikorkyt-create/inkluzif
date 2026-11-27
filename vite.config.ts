@@ -4,16 +4,16 @@ import tailwindcss from "@tailwindcss/vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import { fileURLToPath } from "node:url";
 
-/** `npm run dev` кезінде /api/* сұраныстарын api/ қалтасындағы функцияларға жібереді (Vercel сияқты). */
+/** `npm run dev` кезінде /api/* сұраныстарын server/ қалтасындағы өңдеушілерге жібереді (жергілікті тексеру үшін). */
 function devApi(): Plugin {
   return {
     name: "dev-api",
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
-        const m = req.url?.match(/^\/api\/([a-z]+)/);
+        const m = req.url?.match(/^\/api\/(teacher|play|parent)\b/);
         if (!m) return next();
         try {
-          const mod = await server.ssrLoadModule(`/api/${m[1]}.ts`);
+          const mod = await server.ssrLoadModule(`/server/${m[1]}.ts`);
           const handler = mod[req.method ?? "GET"];
           if (!handler) { res.statusCode = 405; return res.end(); }
           const chunks: Buffer[] = [];

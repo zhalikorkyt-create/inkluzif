@@ -1,11 +1,10 @@
-import { db } from "./_lib/db.js";
-import { body, fail, json, teacherOk } from "./_lib/http.js";
-import { aiEnabled, generateGames, summarize } from "./_lib/ai.js";
-import { fallbackGames } from "./_lib/fallback.js";
-import { voiceEnabled, voiceGames } from "./_lib/voice.js";
+import { Buffer } from "node:buffer";
+import { db } from "./lib/db.js";
+import { body, fail, json, teacherOk } from "./lib/http.js";
+import { aiEnabled, generateGames, summarize } from "./lib/ai.js";
+import { fallbackGames } from "./lib/fallback.js";
+import { voiceEnabled, voiceGames } from "./lib/voice.js";
 import type { Activity, Lesson, Post, Result, Student, Summary, Subject, TeacherState } from "../src/shared/types.js";
-
-export const config = { maxDuration: 60 };
 
 const randomPin = () => String(Math.floor(1000 + Math.random() * 9000));
 
@@ -19,7 +18,7 @@ async function refreshSummary(studentId: string) {
 }
 
 export async function POST(req: Request) {
-  if (!teacherOk(req)) return fail("Құпиясөз қате", 401);
+  if (!(await teacherOk(req))) return fail("Құпиясөз қате", 401);
   const d = db();
   const b = await body<Record<string, any>>(req);
   try {
@@ -108,4 +107,3 @@ export async function POST(req: Request) {
   }
 }
 
-export { refreshSummary };

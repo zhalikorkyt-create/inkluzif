@@ -1,4 +1,7 @@
+import { Buffer } from "node:buffer";
+import { env } from "./env.js";
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { db } from "./db.js";
 
 export const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } });
@@ -9,15 +12,14 @@ export async function body<T = Record<string, unknown>>(req: Request): Promise<T
   try { return (await req.json()) as T; } catch { return {} as T; }
 }
 
-const secret = () => process.env.APP_SECRET || process.env.TEACHER_PASSWORD || process.env.SUPABASE_SERVICE_ROLE_KEY || "demo-secret";
+const secret = () => env("APP_SECRET") || env("SUPABASE_SERVICE_ROLE_KEY") || "demo-secret";
 
-/** Мұғалім құпиясөзін тексереді. Дерекқор қосылмаған демо режимде құпиясөз қойылмаса ашық. */
-export function teacherOk(req: Request): boolean {
-  const pass = process.env.TEACHER_PASSWORD;
-  if (!pass) return !process.env.SUPABASE_URL;
-  const got = req.headers.get("x-teacher-key") ?? "";
-  const a = Buffer.from(got), b = Buffer.from(pass);
-  return a.length === b.length && timingSafeEqual(a, b);
+/** Мұғалімді тексереді: заголовок "логин:құпиясөз", дерекқордағы bcrypt хэшпен салыстырылады. */
+export async function teacherOk(req: Request): Promise<boolean> {
+  const raw = req.headers.get("x-teacher-key") ?? "";
+  const k = raw.indexOf(":");
+  if (k < 1) return false;
+  return db().checkAdmin(decodeURIComponent(raw.slice(0, k)), decodeURIComponent(raw.slice(k + 1)));
 }
 
 export function parentToken(studentId: string) {

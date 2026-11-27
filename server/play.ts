@@ -1,11 +1,9 @@
-import { db } from "./_lib/db.js";
-import { body, fail, json } from "./_lib/http.js";
-import { withAudioUrls } from "./_lib/voice.js";
-import { summarize } from "./_lib/ai.js";
+import { db } from "./lib/db.js";
+import { body, fail, json } from "./lib/http.js";
+import { withAudioUrls } from "./lib/voice.js";
+import { summarize } from "./lib/ai.js";
 import type { Activity, Result, Student } from "../src/shared/types.js";
 import { firstName } from "../src/shared/types.js";
-
-export const config = { maxDuration: 60 };
 
 // Оқушының ойын беті: ойынды алу (GET) және нәтижені жіберу (POST).
 export async function GET(req: Request) {
