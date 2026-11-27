@@ -1,3 +1,4 @@
+import { env } from "./lib/env.js";
 import { Buffer } from "node:buffer";
 import { db } from "./lib/db.js";
 import { body, fail, json, teacherOk } from "./lib/http.js";
@@ -32,7 +33,7 @@ export async function POST(req: Request) {
         ]);
         students.sort((a, b) => a.created_at.localeCompare(b.created_at));
         for (const p of posts) p.photo_url = p.photo_path ? await d.fileUrl(p.photo_path) : null;
-        const state: TeacherState = { students, lessons, activities, results, posts, summaries, features: { ai: aiEnabled(), voice: voiceEnabled(), db: d.real } };
+        const state: TeacherState = { students, lessons, activities, results, posts, summaries, features: { ai: aiEnabled(), voice: voiceEnabled(), db: d.real, workspace: (env("ANTHROPIC_WORKSPACE_ID") ?? "").trim().slice(0, 7) || undefined } };
         return json(state);
       }
 
