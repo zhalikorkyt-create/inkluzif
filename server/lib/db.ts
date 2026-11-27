@@ -110,9 +110,9 @@ function memoryDb(): Db {
 let cached: Db | null = null;
 export function db(): Db {
   if (cached) return cached;
-  const url = env("SUPABASE_URL");
+  const url = env("SUPABASE_URL") || "https://buzjiqnrbjwwiiwhkmfk.supabase.co";
   const key = env("SUPABASE_SERVICE_ROLE_KEY");
-  if (url && key) {
+  if (key) {
     cached = supabaseDb(createClient(url, key, { auth: { persistSession: false } }));
   } else {
     cached = memoryDb();
