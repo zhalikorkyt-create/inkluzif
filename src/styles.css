@@ -27,7 +27,8 @@
 }
 
 @layer base {
-  body { @apply bg-background text-foreground font-sans antialiased; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { @apply bg-background text-foreground font-sans antialiased; -webkit-tap-highlight-color: transparent; }
   h1, h2, h3 { @apply font-display tracking-tight; }
   :focus-visible { @apply outline-2 outline-offset-2 outline-primary; }
 }
@@ -40,10 +41,10 @@
   .chip-amber { @apply bg-amber-soft text-amber; }
   .chip-rose { @apply bg-rose-soft text-rose; }
   .chip-muted { @apply bg-muted text-muted-foreground; }
-  .btn { @apply inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-sm font-bold transition hover:border-primary disabled:opacity-50 disabled:pointer-events-none; }
+  .btn { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-sm sm:min-h-0 font-bold transition hover:border-primary disabled:opacity-50 disabled:pointer-events-none; }
   .btn-primary { @apply border-primary bg-primary text-primary-foreground hover:opacity-90; }
   .btn-ghost { @apply border-transparent bg-transparent text-muted-foreground hover:text-foreground; }
-  .input { @apply w-full rounded-xl border border-border bg-card px-3 py-2 text-sm outline-none focus:border-primary; }
+  .input { @apply w-full rounded-xl border border-border bg-card px-3 py-2.5 text-base sm:py-2 sm:text-sm outline-none focus:border-primary; }
   .label { @apply mb-1 block text-sm font-bold; }
 }
 
