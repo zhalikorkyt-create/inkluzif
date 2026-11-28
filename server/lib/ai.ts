@@ -27,6 +27,8 @@ const ItemSchema = z.object({
 });
 const GamesSchema = z.object({
   title: z.string(),
+  source_goal: z.string().describe("ҚМЖ-дағы оқу мақсаты (коды мен мәтіні) сол күйінде; табылмаса бос"),
+  goal: z.string().describe("Осы оқушыға жеңілдетілген оқу мақсаты, 1 қысқа сөйлем"),
   games: z.array(z.object({
     type: z.enum(["choose", "scramble", "fill"]),
     title: z.string(),
@@ -45,9 +47,15 @@ const SYSTEM = `Сен ерекше білім беру қажеттілігі �
 - Қазақ тілі: дыбыс/әріпті тыңдап таңдау (choose), шашылған әріптерден сөз құрау (scramble, 3-5 әріпті таныс сөз), қысқа сөйлемдегі бос орынды толтыру (fill, сөйлемде "___" болсын).
 - "say" өрісі балаға мейірімді апайдың дауысымен айтылады: нұсқау + сұрақ, 1-2 қысқа сөйлем.
 - answer міндетті түрде options ішіндегі дұрыс индекс болсын. Тапсырмалар ҚМЖ тақырыбымен байланысты болсын.
+- Алдымен ҚМЖ ішінен «Оқу мақсаты» / «Оқу мақсаттары» бөлімін тап (мысалы, 5.1.2.1 сияқты кодпен). Оны source_goal өрісіне сол күйінде жаз.
+  Сосын сол мақсатты осы оқушының деңгейіне қарай өте жеңілдетіп, goal өрісіне 1 сөйлеммен жаз. Барлық ойын осы жеңілдетілген мақсатқа жұмыс істесін.
+  Оқу мақсаты жоқ болса, сабақ тақырыбы мен мазмұнынан ең қарапайым мақсат құрастыр (source_goal бос қалсын).
+- Мұғалімнің осы жолғы нұсқауы берілсе, ол басым: қиындықты, ойын түрін, сан көлемін соған сай өзгерт (бірақ қауіпсіз, баланың жасына сай болсын).
 - Пайдаланылмайтын өрістер: visual.kind="none", shape="none", emoji="", count=0, word="".`;
 
-export async function generateGames(student: Student, subject: Subject, lessonTitle: string, lessonText: string): Promise<{ title: string; games: Game[] }> {
+export interface Generated { title: string; goal: string; source_goal: string; games: Game[] }
+
+export async function generateGames(student: Student, subject: Subject, lessonTitle: string, lessonText: string, teacherPrompt = ""): Promise<Generated> {
   const user = `Оқушы: ${student.name}
 Диагнозы / ерекшелігі: ${student.diagnosis || "көрсетілмеген"}
 Мұғалімнің ескертпесі: ${student.notes || "жоқ"}
@@ -57,7 +65,7 @@ export async function generateGames(student: Student, subject: Subject, lessonTi
 """
 ${lessonText.slice(0, 20000)}
 """
-Осы оқушыға арналған өте жеңіл 2-3 ойын жаса.`;
+${teacherPrompt.trim() ? `Мұғалімнің осы жолғы нұсқауы (міндетті түрде ескер): ${teacherPrompt.trim().slice(0, 1500)}\n` : ""}Осы оқушыға арналған өте жеңіл 2-3 ойын жаса.`;
 
   const res = await client().beta.messages.parse({
     model: MODEL,
@@ -71,7 +79,7 @@ ${lessonText.slice(0, 20000)}
   if (res.stop_reason === "refusal") throw new Error("Жасанды интеллект бұл ҚМЖ-ны өңдей алмады.");
   const out = res.parsed_output;
   if (!out) throw new Error("Жауапты оқу мүмкін болмады, қайталап көріңіз.");
-  return { title: out.title, games: sanitize(out.games as Game[]) };
+  return { title: out.title, goal: out.goal.trim(), source_goal: out.source_goal.trim(), games: sanitize(out.games as Game[]) };
 }
 
 function sanitize(games: Game[]): Game[] {

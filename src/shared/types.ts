@@ -45,6 +45,9 @@ export interface Activity {
   student_id: string;
   subject: Subject;
   title: string;
+  goal?: string;
+  source_goal?: string;
+  prompt?: string;
   games: Game[];
   voiced: boolean;
   created_at: string;
