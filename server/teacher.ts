@@ -61,9 +61,17 @@ export async function POST(req: Request) {
       case "adapt": {
         const [lesson, student] = await Promise.all([d.get<Lesson>("lessons", b.lesson_id), d.get<Student>("students", b.student_id)]);
         if (!lesson || !student) return fail("ҚМЖ немесе оқушы табылмады", 404);
-        const gen = aiEnabled() ? await generateGames(student, lesson.subject, lesson.title, lesson.text) : fallbackGames(lesson.subject, lesson.text);
+        const prompt = String(b.prompt ?? "").slice(0, 1500);
+        const gen = aiEnabled()
+          ? await generateGames(student, lesson.subject, lesson.title, lesson.text, prompt)
+          : { goal: "", source_goal: "", ...fallbackGames(lesson.subject, lesson.text) };
         if (!gen.games.length) return fail("Ойын құрастыру мүмкін болмады, қайталап көріңіз.");
-        const activity = await d.insert<Activity>("activities", { lesson_id: lesson.id, student_id: student.id, subject: lesson.subject, title: gen.title, games: gen.games, voiced: false });
+        const activity = await d.insert<Activity>("activities", { lesson_id: lesson.id, student_id: student.id, subject: lesson.subject, title: gen.title, goal: gen.goal, source_goal: gen.source_goal, prompt, games: gen.games, voiced: false });
+        // «Қайта жасау»: ескі нұсқа әлі ойналмаса, жаңасымен ауыстырамыз (ойналған болса нәтижесі сақталсын)
+        if (typeof b.replace_id === "string" && b.replace_id) {
+          const played = await d.list<Result>("results", { activity_id: b.replace_id });
+          if (!played.length) await d.remove("activities", b.replace_id);
+        }
         return json(activity);
       }
       case "voice": {

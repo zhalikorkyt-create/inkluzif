@@ -18,12 +18,37 @@ async function readFile(f: File): Promise<string> {
   return f.text();
 }
 
+const HINTS = [
+  "Тағы жеңілірек, 2 нұсқа ғана",
+  "Сәл күрделірек",
+  "Көбірек сурет пен санау",
+  "Тек дыбыс пен әріп ойындары",
+  "Сөйлемдер өте қысқа болсын",
+];
+
+function PromptBox({ id, value, onChange }: { id: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div>
+      <label className="label" htmlFor={id}>Мұғалімнің нұсқауы <span className="font-normal text-muted-foreground">(міндетті емес)</span></label>
+      <textarea id={id} rows={2} className="input" value={value} onChange={(e) => onChange(e.target.value)}
+        placeholder="Мысалы: 1-ден 5-ке дейін ғана санау, үшбұрышқа көбірек тапсырма, сәл күрделірек…" />
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {HINTS.map((h) => (
+          <button key={h} type="button" className="chip chip-muted min-h-8 cursor-pointer hover:bg-teal-soft hover:text-teal"
+            onClick={() => onChange(value.trim() ? `${value.trim()}. ${h}` : h)}>+ {h}</button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function Lesson() {
   const { s, call } = useStore();
   const search = Route.useSearch();
   const [subject, setSubject] = useState<Subject>(search.subject === "kaz" ? "kaz" : "math");
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
+  const [prompt, setPrompt] = useState("");
   const [picked, setPicked] = useState<string[]>(s.students.map((x) => x.id));
   const [progress, setProgress] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -44,7 +69,7 @@ function Lesson() {
         const st = s.students.find((x) => x.id === id)!;
         setProgress((p) => [...p, `${st.name}: бейімделуде…`]);
         try {
-          await call("adapt", { lesson_id: lesson.id, student_id: id });
+          await call("adapt", { lesson_id: lesson.id, student_id: id, prompt });
           setProgress((p) => p.map((l) => (l.startsWith(st.name) ? `${st.name}: дайын ✓` : l)));
         } catch (e) {
           setProgress((p) => p.map((l) => (l.startsWith(st.name) ? `${st.name}: қате — ${e instanceof Error ? e.message : e}` : l)));
@@ -80,6 +105,7 @@ function Lesson() {
           <label className="label" htmlFor="tx">ҚМЖ мәтіні</label>
           <textarea id="tx" rows={8} className="input" value={text} onChange={(e) => setText(e.target.value)} placeholder="Файлды жүктеңіз немесе мәтінді осында қойыңыз…" />
         </div>
+        <PromptBox id="pr" value={prompt} onChange={setPrompt} />
         <fieldset>
           <legend className="label">Кімге бейімдейміз?</legend>
           <div className="flex flex-wrap gap-2">
@@ -113,6 +139,8 @@ function ActivityCard({ a }: { a: Activity }) {
   const played = s.results.filter((r) => r.activity_id === a.id).length;
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
+  const [redo, setRedo] = useState(false);
+  const [redoPrompt, setRedoPrompt] = useState(a.prompt ?? "");
   const link = `${location.origin}/play/${a.id}`;
   return (
     <article className="card flex flex-col gap-3">
@@ -123,6 +151,13 @@ function ActivityCard({ a }: { a: Activity }) {
           <p className="text-sm text-muted-foreground">{subjectName(a.subject)} · {a.title} · {new Date(a.created_at).toLocaleDateString("kk-KZ")}</p>
         </div>
       </div>
+      {a.goal && (
+        <div className="rounded-xl bg-teal-soft/60 p-3 text-sm">
+          <p><span className="font-bold text-teal">Мақсат:</span> {a.goal}</p>
+          {a.source_goal && <p className="mt-1 text-xs text-muted-foreground">ҚМЖ бойынша: {a.source_goal}</p>}
+        </div>
+      )}
+      {a.prompt && <p className="text-xs text-muted-foreground">Нұсқау: {a.prompt}</p>}
       <ul className="flex flex-wrap gap-2">{a.games.map((g, i) => <li key={i} className="chip chip-muted">{g.title} · {g.items.length}</li>)}</ul>
       <div className="flex flex-wrap gap-2">
         {a.voiced ? <span className="chip chip-teal">🔊 Апайдың дауысы қосылған</span> : <span className="chip chip-amber">Дауыссыз</span>}
@@ -134,8 +169,20 @@ function ActivityCard({ a }: { a: Activity }) {
         {s.features.voice && !a.voiced && (
           <button className="btn" disabled={busy} onClick={async () => { setBusy(true); setMsg(""); try { await call("voice", { id: a.id }); } catch (e) { setMsg(e instanceof Error ? e.message : String(e)); } finally { setBusy(false); } }}>{busy ? "Дауыстауда…" : "🔊 Дауыстау"}</button>
         )}
+        {a.lesson_id && <button className="btn" onClick={() => setRedo(!redo)}>✏️ Өзгерту</button>}
         <button className="btn btn-ghost text-rose" onClick={async () => { if (confirm("Ойынды жою керек пе?")) await call("activity.delete", { id: a.id }); }}>Жою</button>
       </div>
+      {redo && a.lesson_id && (
+        <div className="grid gap-3 rounded-xl border border-dashed border-border p-3">
+          <PromptBox id={`rp-${a.id}`} value={redoPrompt} onChange={setRedoPrompt} />
+          <button className="btn btn-primary justify-self-start" disabled={busy} onClick={async () => {
+            setBusy(true); setMsg("");
+            try { await call("adapt", { lesson_id: a.lesson_id, student_id: a.student_id, prompt: redoPrompt, replace_id: a.id }); }
+            catch (e) { setMsg(e instanceof Error ? e.message : String(e)); setBusy(false); }
+          }}>{busy ? "Қайта жасалуда… (~30 сек)" : "Қайта жасау"}</button>
+          {played > 0 && <p className="text-xs text-muted-foreground">Бұл ойын ойналған, сондықтан нәтижесі сақталу үшін ескі нұсқасы да қалады.</p>}
+        </div>
+      )}
       {msg && <p className="text-sm text-muted-foreground">{msg}</p>}
     </article>
   );
