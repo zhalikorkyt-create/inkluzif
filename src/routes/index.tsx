@@ -48,7 +48,7 @@ function Index() {
         <div className="pointer-events-none absolute bottom-6 right-6 hidden sm:block"><BookArt /></div>
       </section>
 
-      <section className="mt-5 grid gap-5 sm:grid-cols-2" aria-label="Пәндер">
+      <section className="mt-4 grid grid-cols-2 gap-3 sm:mt-5 sm:gap-5" aria-label="Пәндер">
         {SUBJECTS.map((x) => (
           <Link key={x.id} to="/lesson" search={{ subject: x.id }} className={`rounded-2xl p-5 transition hover:brightness-[0.98] ${x.tone === "mint" ? "bg-teal-soft" : "bg-peach-soft"}`}>
             <p className="text-lg font-extrabold">{x.name}</p>
@@ -77,10 +77,10 @@ function Index() {
         })}
       </div>
 
-      <section className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-4" aria-label="Қысқаша көрсеткіштер">
+      <section className="mt-5 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4" aria-label="Қысқаша көрсеткіштер">
         {([["Оқушы", s.students.length, "/profiles"], ["Бейімделген ойын", s.activities.length, "/lesson"], ["Орындалған ойын", s.results.length, "/journal"], ["Ата-анаға жарияланған", published, "/reports"]] as const).map(([l, v, to]) => (
-          <Link key={l} to={to} className="card transition hover:border-primary">
-            <p className="text-sm text-muted-foreground">{l}</p>
+          <Link key={l} to={to} className="card !p-4 transition hover:border-primary sm:!p-5">
+            <p className="text-xs text-muted-foreground sm:text-sm">{l}</p>
             <p className="font-display text-3xl font-extrabold text-primary">{v}</p>
           </Link>
         ))}
