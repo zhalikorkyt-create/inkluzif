@@ -6,7 +6,21 @@ import type { Game } from "../../src/shared/types.js";
 
 export const voiceEnabled = () => Boolean(env("ELEVENLABS_API_KEY") && env("ELEVENLABS_VOICE_ID"));
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 async function tts(text: string): Promise<Uint8Array> {
+  // ElevenLabs тарифі бір уақыттағы сұраныс санын шектейді (429), сондықтан күтіп қайталаймыз
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await ttsOnce(text);
+    } catch (e) {
+      if (!(e instanceof Error && e.message.includes(" 429 ")) || attempt >= 5) throw e;
+      await sleep(1500 * (attempt + 1));
+    }
+  }
+}
+
+async function ttsOnce(text: string): Promise<Uint8Array> {
   const voice = env("ELEVENLABS_VOICE_ID") ?? "";
   const model = env("ELEVENLABS_MODEL") || "eleven_v3";
   const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice}?output_format=mp3_44100_64`, {
@@ -33,8 +47,10 @@ export async function voiceGames(d: Db, games: Game[]): Promise<Game[]> {
     if (g.instruction) jobs.push(async () => { g.instruction_audio = await audioFor(d, g.instruction); });
     for (const it of g.items) if (it.say) jobs.push(async () => { it.audio = await audioFor(d, it.say); });
   }
-  // бір уақытта 4 сұраныстан артық емес
-  for (let i = 0; i < jobs.length; i += 4) await Promise.all(jobs.slice(i, i + 4).map((j) => j()));
+  // бір уақытта 2 сұраныстан артық емес (ElevenLabs тарифінің шегі 3)
+  let next = 0;
+  const worker = async () => { while (next < jobs.length) await jobs[next++](); };
+  await Promise.all([worker(), worker()]);
   return games;
 }
 
